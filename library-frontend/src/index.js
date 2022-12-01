@@ -7,6 +7,7 @@ import {
 	ApolloProvider,
 	HttpLink,
 	InMemoryCache,
+	split,
 } from "@apollo/client";
 
 const authLink = setContext((_, { headers }) => {
