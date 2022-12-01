@@ -1,8 +1,19 @@
+const { execute, subscribe } = require("graphql");
+
+// WebSocket protocol provides a way to exchange data btw browser and server via a persistent connection
+const { WebSocketServer } = require("ws");
+const { useServer } = require("graphql-ws/lib/use/ws");
+
 const { gql, UserInputError, AuthenticationError } = require("apollo-server");
+
 const { ApolloServer } = require("apollo-server-express");
 const { ApolloServerPluginDrainHttpServer } = require("apollo-server-core");
 const { makeExecutableSchema } = require("@graphql-tools/schema");
+
+// load Express module
 const express = require("express");
+
+// load http module
 const http = require("http");
 
 const jwt = require("jsonwebtoken");
@@ -30,13 +41,27 @@ mongoose
 		console.log("error connection to MongoDB: ", error.message);
 	});
 
+// start func
+
 const start = async () => {
+	// create app Object by calling top-level express() func exported by the Express module
+
 	const app = express();
+
+	// create HTTP server by passing Express app to the createServer func of http module
 	const httpServer = http.createServer(app);
 
 	const schema = makeExecutableSchema({ typeDefs, resolvers });
 
+	// when new WebSocketServer(url) is created, it starts connecting immediately
+	const wsServer = new WebSocketServer({
+		server: httpServer,
+		path: "/",
+	});
+
+	const serverCleanup = useServer({ schema }, wsServer);
 	// server
+
 	const server = new ApolloServer({
 		typeDefs,
 		resolvers,
@@ -51,7 +76,22 @@ const start = async () => {
 				return { currentUser };
 			}
 		}, // context ends
-		plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+
+		// add plugins to ApolloServer constructor to shutdown both HTTP server and WebSocketServer:
+		plugins: [
+			// Proper shutdown for the HTTP server.
+			ApolloServerPluginDrainHttpServer({ httpServer }),
+			{
+				// Proper shutdown for the WebSocket server.
+				async serverWillStart() {
+					return {
+						async drainServer() {
+							await serverCleanup.dispose();
+						},
+					};
+				},
+			},
+		],
 	}); // server ends
 
 	await server.start();

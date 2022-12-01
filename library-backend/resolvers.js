@@ -1,3 +1,9 @@
+// import publish-subscribe(pub/sub) model to track events that update active subscriptions. Graphql-subscriptions library provides the PubSub class
+const { PubSub } = require("graphql-subscriptions");
+
+// create a PubSub instance to enable server code to both publish events to a particular label and listen for events associated with a particular label.
+const pubsub = new PubSub();
+
 const { UserInputError, AuthenticationError } = require("apollo-server");
 
 const jwt = require("jsonwebtoken");
@@ -49,7 +55,9 @@ const resolvers = {
 		},
 	},
 
+	// Mutation starts
 	Mutation: {
+		// resolver for addBook
 		addBook: async (root, args, context) => {
 			const currentUser = context.currentUser;
 
@@ -91,6 +99,12 @@ const resolvers = {
 					invalidArgs: args,
 				});
 			}
+			// publish an event using the publish method of a PubSub instance.
+			//
+			// the 1st param is the name of the event label you're publishing to, as a string
+			// the 2nd param is the payload (include data for the resolver to populate ) associated with the event
+			pubsub.publish("BOOK_ADDED", { bookAdded: book });
+
 			console.log("book", book);
 			return book;
 		},
@@ -142,6 +156,12 @@ const resolvers = {
 				id: user._id,
 			};
 			return { value: jwt.sign(userForToken, JWT_SECRET) };
+		},
+	}, // Mutation ends
+
+	Subscription: {
+		bookAdded: {
+			subscribe: () => pubsub.asyncIterator("BOOK_ADDED"),
 		},
 	},
 };
