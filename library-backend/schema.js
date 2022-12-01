@@ -1,6 +1,16 @@
 const { gql } = require("apollo-server");
 
 const typeDefs = gql`
+	type User {
+		username: String!
+		favoriteGenre: String!
+		id: ID!
+	}
+
+	type Token {
+		value: String!
+	}
+
 	type Author {
 		name: String!
 		born: Int
@@ -21,16 +31,6 @@ const typeDefs = gql`
 		NO
 	}
 
-	type User {
-		username: String!
-		favoriteGenre: String!
-		id: ID!
-	}
-
-	type Token {
-		value: String!
-	}
-
 	type Query {
 		authorCount: Int!
 		bookCount: Int!
@@ -45,7 +45,7 @@ const typeDefs = gql`
 			published: Int
 			author: String!
 			genres: [String!]
-		): Book!
+		): Book
 
 		editAuthor(name: String!, setBornTo: Int!): Author
 

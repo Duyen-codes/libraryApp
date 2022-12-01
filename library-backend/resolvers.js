@@ -1,7 +1,5 @@
-// import publish-subscribe(pub/sub) model to track events that update active subscriptions. Graphql-subscriptions library provides the PubSub class
 const { PubSub } = require("graphql-subscriptions");
 
-// create a PubSub instance to enable server code to both publish events to a particular label and listen for events associated with a particular label.
 const pubsub = new PubSub();
 
 const { UserInputError, AuthenticationError } = require("apollo-server");
@@ -34,7 +32,7 @@ const resolvers = {
 				return books;
 			}
 			if (args.author && !args.genre) {
-				return Book.find({ author: { $in: [args.author] } });
+				return Book.find({ author: { $in: [args.author] } }).populate("author");
 			}
 			if (args.author && args.genre) {
 				return Book.find({
@@ -43,10 +41,16 @@ const resolvers = {
 				});
 			}
 		},
+
+		// resolver for me query
 		me: (root, args, context) => {
+			console.log("args in me", args);
+			console.log("context in me", context);
+			console.log("context.currentUser in me", context.currentUser);
 			return context.currentUser;
 		},
-	},
+	}, // end of Query
+
 	Author: {
 		bookCount: async (root) => {
 			const booksByAuthor = await Book.find({ author: root.id });
@@ -59,20 +63,14 @@ const resolvers = {
 	Mutation: {
 		// resolver for addBook
 		addBook: async (root, args, context) => {
+			console.log("addBook args", args);
+
 			const currentUser = context.currentUser;
+
+			console.log("currentUser", currentUser);
 
 			if (!currentUser) {
 				throw new AuthenticationError("not authenticated");
-			}
-			if (args.title.length < 2) {
-				throw new UserInputError(
-					"book title must be at least 2 character long",
-				);
-			}
-			if (args.author.length < 4) {
-				throw new UserInputError(
-					"author name must be at least 4 character long",
-				);
 			}
 
 			let author = await Author.findOne({ name: args.author });
@@ -90,7 +88,7 @@ const resolvers = {
 				}
 			}
 
-			const book = new Book({ ...args, author: author });
+			const book = new Book({ ...args, author });
 
 			try {
 				await book.save();
@@ -99,10 +97,7 @@ const resolvers = {
 					invalidArgs: args,
 				});
 			}
-			// publish an event using the publish method of a PubSub instance.
-			//
-			// the 1st param is the name of the event label you're publishing to, as a string
-			// the 2nd param is the payload (include data for the resolver to populate ) associated with the event
+
 			pubsub.publish("BOOK_ADDED", { bookAdded: book });
 
 			console.log("book", book);
@@ -145,7 +140,10 @@ const resolvers = {
 
 		// resolver of login mutation
 		login: async (root, args) => {
+			console.log("args in login", args);
 			const user = await User.findOne({ username: args.username });
+
+			console.log("user", user);
 
 			if (!user || args.password !== "secret") {
 				throw new UserInputError("wrong credentials");
@@ -155,6 +153,8 @@ const resolvers = {
 				username: user.username,
 				id: user._id,
 			};
+
+			console.log("userForToken", userForToken);
 			return { value: jwt.sign(userForToken, JWT_SECRET) };
 		},
 	}, // Mutation ends

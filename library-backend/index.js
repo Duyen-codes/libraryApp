@@ -44,16 +44,12 @@ mongoose
 // start func
 
 const start = async () => {
-	// create app Object by calling top-level express() func exported by the Express module
-
 	const app = express();
 
-	// create HTTP server by passing Express app to the createServer func of http module
 	const httpServer = http.createServer(app);
 
 	const schema = makeExecutableSchema({ typeDefs, resolvers });
 
-	// when new WebSocketServer(url) is created, it starts connecting immediately
 	const wsServer = new WebSocketServer({
 		server: httpServer,
 		path: "/",
@@ -63,21 +59,20 @@ const start = async () => {
 	// server
 
 	const server = new ApolloServer({
-		typeDefs,
-		resolvers,
+		schema,
 		context: async ({ req }) => {
 			const auth = req ? req.headers.authorization : null;
+			console.log("authorization in context req", req.headers.authorization);
 
 			if (auth && auth.toLowerCase().startsWith("bearer ")) {
 				const decodedToken = jwt.verify(auth.substring(7), JWT_SECRET);
-
+				console.log("decodedToken", decodedToken);
 				const currentUser = await User.findById(decodedToken.id);
-				console.log("currentUser", currentUser);
+				console.log("currentUser context", currentUser);
 				return { currentUser };
 			}
 		}, // context ends
 
-		// add plugins to ApolloServer constructor to shutdown both HTTP server and WebSocketServer:
 		plugins: [
 			// Proper shutdown for the HTTP server.
 			ApolloServerPluginDrainHttpServer({ httpServer }),
