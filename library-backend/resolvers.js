@@ -15,10 +15,18 @@ const User = require("./models/user");
 const resolvers = {
 	Query: {
 		authorCount: async () => Author.collection.countDocuments(),
+
 		bookCount: async () => Book.collection.countDocuments(),
+
 		allAuthors: async () => {
-			return Author.find({});
+			console.log("QUERY allAuthors");
+
+			const authorsWithBooks = await Author.find({}).populate("books");
+			console.log("authorsWithBooks", authorsWithBooks);
+
+			return authorsWithBooks;
 		},
+
 		allBooks: async (root, args) => {
 			console.log("args.genre", args.genre);
 			if (!args.author && !args.genre) {
@@ -52,10 +60,12 @@ const resolvers = {
 	}, // end of Query
 
 	Author: {
-		bookCount: async (root) => {
-			const booksByAuthor = await Book.find({ author: root.id });
+		bookCount: (root) => {
+			console.log("root in Author bookCount", root);
+			const booksByAuthor = root.books.length;
 
-			return booksByAuthor.length;
+			console.log("booksByAuthor", booksByAuthor);
+			return booksByAuthor;
 		},
 	},
 

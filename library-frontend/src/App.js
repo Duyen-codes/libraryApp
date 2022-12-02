@@ -28,6 +28,9 @@ const App = () => {
 	const authorResult = useQuery(ALL_AUTHORS);
 	const bookResult = useQuery(ALL_BOOKS);
 
+	console.log("bookResult", bookResult);
+	console.log("authorResult", authorResult);
+
 	const [token, setToken] = useState(
 		localStorage.getItem("library-user-token") || null,
 	);
