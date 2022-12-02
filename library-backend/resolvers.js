@@ -20,7 +20,8 @@ const resolvers = {
 
 		allAuthors: async () => {
 			console.log("QUERY allAuthors");
-
+			const authors = await Author.find({});
+			console.log("authors", authors);
 			const authorsWithBooks = await Author.find({}).populate("books");
 			console.log("authorsWithBooks", authorsWithBooks);
 
@@ -29,9 +30,11 @@ const resolvers = {
 
 		allBooks: async (root, args) => {
 			console.log("args.genre", args.genre);
+
 			if (!args.author && !args.genre) {
-				return Book.find({}).populate("author", { name: 1 });
+				return Book.find({}).populate("author");
 			}
+
 			if (!args.author && args.genre) {
 				const books = await Book.find({
 					genres: { $in: [args.genre] },
@@ -39,14 +42,16 @@ const resolvers = {
 				console.log("books", books);
 				return books;
 			}
+
 			if (args.author && !args.genre) {
 				return Book.find({ author: { $in: [args.author] } }).populate("author");
 			}
+
 			if (args.author && args.genre) {
 				return Book.find({
 					author: { $in: [args.author] },
 					genres: { $in: [args.genre] },
-				});
+				}).populate("author");
 			}
 		},
 
@@ -62,6 +67,7 @@ const resolvers = {
 	Author: {
 		bookCount: (root) => {
 			console.log("root in Author bookCount", root);
+
 			const booksByAuthor = root.books.length;
 
 			console.log("booksByAuthor", booksByAuthor);

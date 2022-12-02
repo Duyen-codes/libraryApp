@@ -1,5 +1,6 @@
 const { gql } = require("apollo-server");
 
+// Graphql type definitions define the overall GraphQL schema
 const typeDefs = gql`
 	type User {
 		username: String!
