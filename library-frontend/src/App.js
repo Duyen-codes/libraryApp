@@ -7,6 +7,20 @@ import Recommend from "./components/Recommend";
 import { useQuery, useApolloClient, useSubscription } from "@apollo/client";
 import { ALL_AUTHORS, ALL_BOOKS, BOOK_ADDED } from "./queries";
 
+export const updateCache = (cache, query, addedBook) => {
+	const uniqByTitle = (array) => {
+		let seen = new Set();
+		return array.filter((item) => {
+			let k = item.title;
+			return seen.has(k) ? false : seen.add(k);
+		});
+	};
+
+	cache.updateQuery(query, ({ allBooks }) => {
+		return { allBooks: uniqByTitle(allBooks.concat(addedBook)) };
+	});
+};
+
 const App = () => {
 	const [page, setPage] = useState("authors");
 	const [errorMessage, setErrorMessage] = useState(null);
@@ -27,6 +41,14 @@ const App = () => {
 		onData: ({ data }) => {
 			console.log("from useSubscription in App.js");
 			console.log("data", data);
+			const addedBook = data.data.bookAdded;
+			window.alert(`${addedBook.title} added`);
+
+			client.cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
+				return {
+					allBooks: allBooks.concat(addedBook),
+				};
+			});
 		},
 	});
 
