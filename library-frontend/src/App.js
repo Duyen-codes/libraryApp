@@ -25,7 +25,8 @@ const App = () => {
 
 	useSubscription(BOOK_ADDED, {
 		onData: ({ data }) => {
-			console.log(data);
+			console.log("from useSubscription in App.js");
+			console.log("data", data);
 		},
 	});
 
