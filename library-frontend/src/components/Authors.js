@@ -18,6 +18,7 @@ const Authors = ({ show, authors }) => {
 	}));
 
 	const submit = (event) => {
+		console.log("edit author submitted");
 		event.preventDefault();
 		editAuthor({
 			variables: { name: selectedOption.value, setBornTo: parseInt(born) },

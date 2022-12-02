@@ -41,6 +41,8 @@ mongoose
 		console.log("error connection to MongoDB: ", error.message);
 	});
 
+const context = (ctx) => ctx;
+
 // start func
 
 const start = async () => {

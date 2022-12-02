@@ -89,6 +89,7 @@ const resolvers = {
 			}
 
 			const book = new Book({ ...args, author });
+			console.log("book in addBook resolvers", book);
 
 			try {
 				await book.save();
@@ -100,11 +101,13 @@ const resolvers = {
 
 			pubsub.publish("BOOK_ADDED", { bookAdded: book });
 
-			console.log("book", book);
+			console.log("book before return", book);
 			return book;
 		},
 
 		editAuthor: async (root, args, { currentUser }) => {
+			console.log("currentUser in editAuthor", currentUser);
+
 			if (!currentUser) {
 				throw new AuthenticationError("not authenticated");
 			}
